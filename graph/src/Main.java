@@ -72,5 +72,21 @@ public class Main {
         g.lexBfs(8).forEach(System.out::println);
 
 
+        g = new Graph(false, true);
+        g.insertEdge(0, 1, 7);
+        g.insertEdge(0, 2, 9);
+        g.insertEdge(1, 2, 10);
+        g.insertEdge(0, 5, 14);
+        g.insertEdge(1, 3, 15);
+        g.insertEdge(2, 5, 2);
+        g.insertEdge(2, 3, 11);
+        g.insertEdge(4, 5, 9);
+        g.insertEdge(3, 4, 6);
+
+        System.out.println("Test for disjktra");
+        List<Integer> dist = g.disjktra(0);
+        System.out.println(dist);
+        System.out.println(dist.get(4).equals(20));
+
     }
 }

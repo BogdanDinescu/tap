@@ -1,4 +1,7 @@
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.IntStream;
 
 public class Graph implements IGraph {
     private final HashMap<Integer, HashSet<Pair>> adjacencyList;
@@ -248,8 +251,29 @@ public class Graph implements IGraph {
     public List<Integer> disjktra(int s) {
         if (!weighted)
             throw new RuntimeException("Graph not weighted");
-        List<Integer> result = new ArrayList<>();
-        return result;
+
+        // init
+        List<Integer> dist = new ArrayList<>(this.numberOfNodes());
+        LinkedList<Pair> queue = new LinkedList<>();
+        IntStream.range(0, this.numberOfNodes()).forEach(x -> dist.add(Integer.MAX_VALUE));
+        dist.set(0, s);
+        queue.add(new Pair(dist.get(s), s));
+
+        while (!queue.isEmpty()) {
+            Integer x = queue.poll().getB();
+            listNeighborsWithWeight(x).forEach(p -> {
+                Integer y = p.getA();
+                Integer w = p.getB();
+                int newDist = dist.get(x) + w;
+                if (dist.get(y) > newDist) {
+                    queue.remove(new Pair(dist.get(y), y));
+                    dist.set(y, newDist);
+                    queue.add(new Pair(dist.get(y), y));
+                }
+            });
+        }
+
+        return dist;
     }
 
 }
