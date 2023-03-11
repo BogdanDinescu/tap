@@ -1,28 +1,28 @@
 import java.util.Objects;
 
 public class Pair {
-    private Integer x;
-    private Integer y;
+    private Integer a;
+    private Integer b;
 
-    public Pair(Integer x, Integer y) {
-        this.x = x;
-        this.y = y;
+    public Pair(Integer a, Integer b) {
+        this.a = a;
+        this.b = b;
     }
 
-    public Integer getX() {
-        return x;
+    public Integer getA() {
+        return a;
     }
 
-    public void setX(Integer x) {
-        this.x = x;
+    public void setA(Integer a) {
+        this.a = a;
     }
 
-    public Integer getY() {
-        return y;
+    public Integer getB() {
+        return b;
     }
 
-    public void setY(Integer y) {
-        this.y = y;
+    public void setB(Integer b) {
+        this.b = b;
     }
 
     @Override
@@ -30,11 +30,16 @@ public class Pair {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Pair pair = (Pair) o;
-        return x.equals(pair.x) && y.equals(pair.y);
+        return a.equals(pair.a) && b.equals(pair.b);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(x, y);
+        return Objects.hash(a, b);
+    }
+
+    @Override
+    public String toString() {
+        return "{" + a.toString() + " " + b.toString() + "}";
     }
 }

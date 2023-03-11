@@ -25,11 +25,11 @@ public class Graph implements IGraph {
     public List<Pair> listEdges() {
         List<Pair> result = new ArrayList<>();
         if (oriented) {
-            adjacencyList.forEach((x, hashSet) -> hashSet.forEach(p -> result.add(new Pair(x, p.getX()))));
+            adjacencyList.forEach((x, hashSet) -> hashSet.forEach(p -> result.add(new Pair(x, p.getA()))));
         } else {
             adjacencyList.forEach((x, hashSet) -> hashSet.forEach(p -> {
-                if (x < p.getX()) {
-                    result.add(new Pair(x, p.getX()));
+                if (x < p.getA()) {
+                    result.add(new Pair(x, p.getA()));
                 }
             }));
         }
@@ -38,7 +38,14 @@ public class Graph implements IGraph {
 
     @Override
     public List<Integer> listNeighbors(int x) {
-        return adjacencyList.get(x).stream().map(Pair::getX).toList();
+        return adjacencyList.get(x).stream().map(Pair::getA).toList();
+    }
+
+    @Override
+    public List<Pair> listNeighborsWithWeight(int x) {
+        if (!weighted)
+            throw new RuntimeException("Graph not weighted");
+        return adjacencyList.get(x).stream().toList();
     }
 
     @Override
@@ -58,12 +65,12 @@ public class Graph implements IGraph {
 
     @Override
     public boolean areAdjacent(int x, int y) {
-        return adjacencyList.get(x).contains(y);
+        return listNeighbors(x).contains(y);
     }
 
     @Override
     public void insertEdge(Pair pair) {
-        insertEdge(pair.getX(), pair.getY());
+        insertEdge(pair.getA(), pair.getB());
     }
 
     @Override
@@ -77,13 +84,16 @@ public class Graph implements IGraph {
         numberOfEdges++;
     }
 
+    @Override
     public void insertEdge(int x, int y) {
+        if (weighted)
+            throw new RuntimeException("Weight omitted!");
         insertEdge(x, y, 0);
     }
 
     @Override
     public void deleteEdge(Pair pair) {
-        this.deleteEdge(pair.getX(), pair.getY());
+        this.deleteEdge(pair.getA(), pair.getB());
     }
 
     @Override
@@ -96,19 +106,19 @@ public class Graph implements IGraph {
     @Override
     public void deleteNode(int n) {
         List<Integer> integers = this.listNeighbors(n);
-        integers.forEach(i -> adjacencyList.get(i).remove(n));
+        integers.forEach(i -> adjacencyList.get(i).removeIf(p -> p.getA().equals(n)));
         adjacencyList.remove(n);
     }
 
     @Override
     public void contrEdge(Pair p) {
-        List<Integer> neighborsOfY = this.listNeighbors(p.getY());
-        List<Integer> neighborsOfX = this.listNeighbors(p.getX());
+        List<Integer> neighborsOfY = this.listNeighbors(p.getB());
+        List<Integer> neighborsOfX = this.listNeighbors(p.getA());
         Set<Integer> neighbors = new HashSet<>();
         neighbors.addAll(neighborsOfX);
         neighbors.addAll(neighborsOfY);
-        neighbors.remove(p.getX());
-        this.deleteNode(p.getX());
+        neighbors.remove(p.getA());
+        this.deleteNode(p.getA());
         System.out.println(neighbors);
     }
 
@@ -162,7 +172,7 @@ public class Graph implements IGraph {
     }
 
     public List<Set<Integer>> refine(List<Set<Integer>> list, Set<Integer> u) {
-        List<Set<Integer>> result = new LinkedList<Set<Integer>>();
+        List<Set<Integer>> result = new LinkedList<>();
         Set<Integer> s1 = new HashSet<>();
         Set<Integer> s2 = new HashSet<>();
         list.forEach(s -> {
@@ -188,7 +198,7 @@ public class Graph implements IGraph {
     }
 
     private List<Set<Integer>> separateListOnSets(List<Integer> vertices, Integer s) {
-        List<Set<Integer>> list = new LinkedList<Set<Integer>>();
+        List<Set<Integer>> list = new LinkedList<>();
         Set<Integer> s1 = new HashSet<>();
         Set<Integer> s2 = new HashSet<>();
 
@@ -236,6 +246,8 @@ public class Graph implements IGraph {
     }
 
     public List<Integer> disjktra(int s) {
+        if (!weighted)
+            throw new RuntimeException("Graph not weighted");
         List<Integer> result = new ArrayList<>();
         return result;
     }

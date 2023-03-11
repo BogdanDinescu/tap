@@ -5,6 +5,7 @@ public interface IGraph {
     Set<Integer> listNodes();
     List<Pair> listEdges();
     List<Integer> listNeighbors(int x);
+    public List<Pair> listNeighborsWithWeight(int x);
     int numberOfNodes();
     int numberOfEdges();
     int grad(int x);

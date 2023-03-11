@@ -6,7 +6,7 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) {
-        Graph graph = new Graph(false, false);
+        Graph graph = new Graph();
         try (BufferedReader reader = new BufferedReader(new FileReader("facebook_combined.txt"))) {
 
             String line = reader.readLine();
@@ -54,7 +54,7 @@ public class Main {
         assert dfs.get(3) == 1 : "fourth bfs element is not 1";
 
 
-        g = new Graph(false, false);
+        g = new Graph();
         g.insertEdge(1, 2);
         g.insertEdge(2, 5);
         g.insertEdge(5, 6);
