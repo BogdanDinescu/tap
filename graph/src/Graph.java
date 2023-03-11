@@ -1,7 +1,7 @@
 import java.util.*;
 
 public class Graph implements IGraph {
-    private final HashMap<Integer, HashSet<Integer>> adjacencyList;
+    private final HashMap<Integer, HashSet<Pair>> adjacencyList;
     private final boolean oriented;
     private final boolean weighted;
     private int numberOfEdges;
@@ -25,11 +25,11 @@ public class Graph implements IGraph {
     public List<Pair> listEdges() {
         List<Pair> result = new ArrayList<>();
         if (oriented) {
-            adjacencyList.forEach((x, hashSet) -> hashSet.forEach(y -> result.add(new Pair(x, y))));
+            adjacencyList.forEach((x, hashSet) -> hashSet.forEach(p -> result.add(new Pair(x, p.getX()))));
         } else {
-            adjacencyList.forEach((x, hashSet) -> hashSet.forEach(y -> {
-                if (x < y) {
-                    result.add(new Pair(x, y));
+            adjacencyList.forEach((x, hashSet) -> hashSet.forEach(p -> {
+                if (x < p.getX()) {
+                    result.add(new Pair(x, p.getX()));
                 }
             }));
         }
@@ -38,7 +38,7 @@ public class Graph implements IGraph {
 
     @Override
     public List<Integer> listNeighbors(int x) {
-        return adjacencyList.get(x).stream().toList();
+        return adjacencyList.get(x).stream().map(Pair::getX).toList();
     }
 
     @Override
@@ -48,7 +48,7 @@ public class Graph implements IGraph {
 
     @Override
     public int numberOfEdges() {
-        return listEdges().size();
+        return numberOfEdges;
     }
 
     @Override
@@ -67,16 +67,18 @@ public class Graph implements IGraph {
     }
 
     @Override
-    public void insertEdge(int x, int y) {
-        if (oriented) {
-            adjacencyList.computeIfAbsent(x, k -> new HashSet<>());
-            adjacencyList.get(x).add(y);
-        } else {
-            adjacencyList.computeIfAbsent(x, k -> new HashSet<>());
+    public void insertEdge(int x, int y, int weight) {
+        adjacencyList.computeIfAbsent(x, k -> new HashSet<>());
+        adjacencyList.get(x).add(new Pair(y, weight));
+        if (!oriented) {
             adjacencyList.computeIfAbsent(y, k -> new HashSet<>());
-            adjacencyList.get(x).add(y);
-            adjacencyList.get(y).add(x);
+            adjacencyList.get(y).add(new Pair(x,weight));
         }
+        numberOfEdges++;
+    }
+
+    public void insertEdge(int x, int y) {
+        insertEdge(x, y, 0);
     }
 
     @Override
@@ -88,6 +90,7 @@ public class Graph implements IGraph {
     public void deleteEdge(int x, int y) {
         deleteNode(x);
         deleteNode(y);
+        numberOfEdges--;
     }
 
     @Override
@@ -232,5 +235,9 @@ public class Graph implements IGraph {
         return result;
     }
 
+    public List<Integer> disjktra(int s) {
+        List<Integer> result = new ArrayList<>();
+        return result;
+    }
 
 }
