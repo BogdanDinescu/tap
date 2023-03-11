@@ -6,7 +6,7 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) {
-        Graph graph = new Graph(false);
+        Graph graph = new Graph(false, false);
         try (BufferedReader reader = new BufferedReader(new FileReader("facebook_combined.txt"))) {
 
             String line = reader.readLine();
@@ -22,10 +22,13 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println("Test1:");
         System.out.println(graph.grad(7) == 20);
+        System.out.println("Test for number of edges");
+        System.out.println(graph.numberOfEdges() == 88234);
 
 
-        Graph g = new Graph(true);
+        Graph g = new Graph(true, false);
 
         g.insertEdge(0, 1);
         g.insertEdge(0, 2);
@@ -35,14 +38,23 @@ public class Main {
         g.insertEdge(3, 3);
 
         List<Integer> bfs = g.bfs(2);
+        System.out.println("\nTest for bfs");
         bfs.forEach(System.out::print);
         assert bfs.get(0) == 2 : "first bfs element is not 2";
         assert bfs.get(1) == 0 : "second bfs element is not 0";
         assert bfs.get(2) == 3 : "third bfs element is not 3";
         assert bfs.get(3) == 1 : "fourth bfs element is not 1";
 
+        List<Integer> dfs = g.dfs(0);
+        System.out.println("\nTest for dfs");
+        dfs.forEach(System.out::print);
+        assert dfs.get(0) == 0 : "first bfs element is not 0";
+        assert dfs.get(1) == 2 : "second bfs element is not 2";
+        assert dfs.get(2) == 3 : "third bfs element is not 3";
+        assert dfs.get(3) == 1 : "fourth bfs element is not 1";
 
-        g = new Graph(false);
+
+        g = new Graph(false, false);
         g.insertEdge(1, 2);
         g.insertEdge(2, 5);
         g.insertEdge(5, 6);
@@ -56,7 +68,7 @@ public class Main {
         g.insertEdge(4, 6);
         g.insertEdge(4, 8);
         g.insertEdge(3, 6);
-        System.out.println();
+        System.out.println("\nTest for lexBFS");
         g.lexBfs(8).forEach(System.out::println);
 
 

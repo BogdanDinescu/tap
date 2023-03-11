@@ -3,15 +3,24 @@ import java.util.*;
 public class Graph implements IGraph {
     private final HashMap<Integer, HashSet<Integer>> adjacencyList;
     private final boolean oriented;
+    private final boolean weighted;
+    private int numberOfEdges;
 
-    public Graph(boolean oriented) {
+    public Graph(boolean oriented, boolean weighted) {
         this.oriented = oriented;
+        this.weighted = weighted;
         this.adjacencyList = new HashMap<>();
     }
+
+    public Graph() {
+        this(false, false);
+    }
+
     @Override
     public Set<Integer> listNodes() {
         return adjacencyList.keySet();
     }
+
     @Override
     public List<Pair> listEdges() {
         List<Pair> result = new ArrayList<>();
@@ -26,26 +35,32 @@ public class Graph implements IGraph {
         }
         return result;
     }
+
     @Override
     public List<Integer> listNeighbors(int x) {
         return adjacencyList.get(x).stream().toList();
     }
+
     @Override
     public int numberOfNodes() {
         return adjacencyList.size();
     }
+
     @Override
     public int numberOfEdges() {
         return listEdges().size();
     }
+
     @Override
     public int grad(int x) {
         return adjacencyList.get(x).size();
     }
+
     @Override
     public boolean areAdjacent(int x, int y) {
         return adjacencyList.get(x).contains(y);
     }
+
     @Override
     public void insertEdge(Pair pair) {
         insertEdge(pair.getX(), pair.getY());
@@ -81,6 +96,7 @@ public class Graph implements IGraph {
         integers.forEach(i -> adjacencyList.get(i).remove(n));
         adjacencyList.remove(n);
     }
+
     @Override
     public void contrEdge(Pair p) {
         List<Integer> neighborsOfY = this.listNeighbors(p.getY());
@@ -92,6 +108,8 @@ public class Graph implements IGraph {
         this.deleteNode(p.getX());
         System.out.println(neighbors);
     }
+
+    @Override
     public List<Integer> bfs(int s) {
         List<Integer> result = new ArrayList<>();
         Set<Integer> visited = new HashSet<>();
@@ -113,6 +131,30 @@ public class Graph implements IGraph {
             });
 
         }
+        return result;
+    }
+
+    public List<Integer> dfs(int s) {
+        List<Integer> result = new ArrayList<>();
+        Set<Integer> visited = new HashSet<>();
+        Stack<Integer> stack = new Stack<>();
+
+        visited.add(s);
+        stack.add(s);
+
+        while (!stack.isEmpty()) {
+
+            s = stack.pop();
+            result.add(s);
+
+            listNeighbors(s).forEach(n -> {
+                if (!visited.contains(n)) {
+                    visited.add(n);
+                    stack.add(n);
+                }
+            });
+        }
+
         return result;
     }
 
@@ -189,4 +231,6 @@ public class Graph implements IGraph {
 
         return result;
     }
+
+
 }

@@ -15,4 +15,7 @@ public interface IGraph {
     void deleteEdge(int x, int y);
     void deleteNode(int x);
     void contrEdge(Pair p);
+
+    List<Integer> bfs(int s);
+    List<Integer> dfs(int s);
 }
