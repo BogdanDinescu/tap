@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
@@ -88,5 +89,29 @@ public class Main {
         System.out.println(dist);
         System.out.println(dist.get(4).equals(20));
 
+
+        g = new Graph(false, true);
+        g.insertEdge(0, 1, 4);
+        g.insertEdge(0, 2, 3);
+        g.insertEdge(1, 5, 5);
+        g.insertEdge(1, 4, 12);
+        g.insertEdge(2, 4, 10);
+        g.insertEdge(2, 3, 7);
+        g.insertEdge(3, 4, 2);
+        g.insertEdge(5, 6, 16);
+        g.insertEdge(4, 6, 5);
+
+        System.out.println("\nTest for A*");
+        List<Integer> h = new ArrayList<>(g.numberOfNodes());
+        h.add(14);
+        h.add(12);
+        h.add(11);
+        h.add(6);
+        h.add(4);
+        h.add(11);
+        h.add(Integer.MAX_VALUE);
+        List<Integer> dist2 = g.aStar(0, 6, h);
+        System.out.println(dist2);
+        System.out.println(dist2.get(6).equals(17));
     }
 }

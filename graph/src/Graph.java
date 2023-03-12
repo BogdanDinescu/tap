@@ -1,6 +1,4 @@
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.IntStream;
 
 public class Graph implements IGraph {
@@ -276,4 +274,76 @@ public class Graph implements IGraph {
         return dist;
     }
 
+    private boolean isInPath(Map<Integer, Integer> parents, Integer y) {
+        int currentNode = y;
+        while (true) {
+            Integer parent = parents.get(currentNode);
+            if (parent == null) break;
+            if (y.equals(parent)) {
+                return true;
+            }
+            currentNode = parent;
+        }
+        return false;
+    }
+
+    public List<Integer> aStar(int start, int end, List<Integer> h) {
+        if (!weighted)
+            throw new RuntimeException("Graph not weighted");
+
+        // init
+        Queue<Tuple> open = new PriorityQueue<>(Comparator.comparingInt(Tuple::getF));
+        LinkedList<Integer> closed = new LinkedList<>();
+        List<Integer> g = new ArrayList<>(this.numberOfNodes());
+        List<Integer> f = new ArrayList<>(this.numberOfNodes());
+        IntStream.range(0, this.numberOfNodes()).forEach(x -> g.add(0));
+        f.addAll(h);
+        Map<Integer, Integer> parents = new HashMap<>(this.numberOfNodes());
+        open.add(new Tuple(start, g.get(start), f.get(start)));
+
+        while (!open.isEmpty()) {
+            Integer node = open.poll().getN();
+            closed.add(node);
+
+            if (node.equals(end)) {
+                break;
+            }
+
+            listNeighborsWithWeight(node).forEach(p -> {
+                Integer y = p.getA();
+                Integer w = p.getB();
+
+                if (!isInPath(parents, y)) {
+                    int g_suc = g.get(node) + w;
+                    int f_suc = g_suc + h.get(node);
+
+                    if (closed.contains(y)) {
+                        if (f_suc < f.get(y)) {
+                            closed.removeIf(x -> x.equals(y));
+                            parents.put(y, node);
+                            g.set(y, g_suc);
+                            f.set(y, f_suc);
+                            open.add(new Tuple(y, g_suc, f_suc));
+                        }
+                    } else {
+                        if (open.stream().anyMatch(t -> t.getN().equals(y))) {
+                            if (f_suc < f.get(y)) {
+                                open.removeIf(t -> t.getN().equals(y));
+                                parents.put(y, node);
+                                g.set(y, g_suc);
+                                f.set(y, f_suc);
+                                open.add(new Tuple(y, g_suc, f_suc));
+                            }
+                        } else {
+                            open.add(new Tuple(y, g_suc, f_suc));
+                            g.set(y, g_suc);
+                            f.set(y, f_suc);
+                        }
+                    }
+                }
+            });
+        }
+        return g;
+    }
+    
 }
