@@ -113,5 +113,30 @@ public class Main {
         List<Integer> dist2 = g.aStar(0, 6, h);
         System.out.println(dist2);
         System.out.println(dist2.get(6).equals(17));
+
+        g = new Graph(true, false);
+
+        g.insertEdge(0, 1);
+        g.insertEdge(0, 2);
+        g.insertEdge(1, 2);
+        g.insertEdge(2, 0);
+        g.insertEdge(2, 3);
+        g.insertEdge(3, 3);
+
+        System.out.println("\nTest for paralel bfs");
+        List<Integer> pbfs = g.pbfs(2);
+        System.out.println(pbfs);
+        assert bfs.get(0) == 2 : "first bfs element is not 2";
+        assert bfs.get(1) == 0 : "second bfs element is not 0";
+        assert bfs.get(2) == 3 : "third bfs element is not 3";
+        assert bfs.get(3) == 1 : "fourth bfs element is not 1";
+
+        System.out.println("\nTest for paralel dfs");
+        List<Integer> pdfs = g.dfs(0);
+        System.out.println(pdfs);
+        assert dfs.get(0) == 0 : "first bfs element is not 0";
+        assert dfs.get(1) == 2 : "second bfs element is not 2";
+        assert dfs.get(2) == 3 : "third bfs element is not 3";
+        assert dfs.get(3) == 1 : "fourth bfs element is not 1";
     }
 }

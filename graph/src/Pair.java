@@ -1,6 +1,6 @@
 import java.util.Objects;
 
-public class Pair {
+public class Pair implements Comparable {
     private Integer a;
     private Integer b;
 
@@ -41,5 +41,11 @@ public class Pair {
     @Override
     public String toString() {
         return "{" + a.toString() + " " + b.toString() + "}";
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        Pair p = (Pair) o;
+        return p.b - this.b;
     }
 }

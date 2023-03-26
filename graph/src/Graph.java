@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
 public class Graph implements IGraph {
@@ -252,7 +253,7 @@ public class Graph implements IGraph {
 
         // init
         List<Integer> dist = new ArrayList<>(this.numberOfNodes());
-        LinkedList<Pair> queue = new LinkedList<>();
+        PriorityQueue<Pair> queue = new PriorityQueue<>();
         IntStream.range(0, this.numberOfNodes()).forEach(x -> dist.add(Integer.MAX_VALUE));
         dist.set(0, s);
         queue.add(new Pair(dist.get(s), s));
@@ -274,7 +275,7 @@ public class Graph implements IGraph {
         return dist;
     }
 
-    private boolean isInPath(Map<Integer, Integer> parents, Integer y) {
+    private boolean isInParents(Map<Integer, Integer> parents, Integer y) {
         int currentNode = y;
         while (true) {
             Integer parent = parents.get(currentNode);
@@ -313,7 +314,7 @@ public class Graph implements IGraph {
                 Integer y = p.getA();
                 Integer w = p.getB();
 
-                if (!isInPath(parents, y)) {
+                if (!isInParents(parents, y)) {
                     int g_suc = g.get(node) + w;
                     int f_suc = g_suc + h.get(node);
 
@@ -345,5 +346,88 @@ public class Graph implements IGraph {
         }
         return g;
     }
-    
+
+
+    private static class inParallelWhile implements Runnable {
+
+        private final Graph graph;
+        private final LinkedList<Integer> cq;
+        private final LinkedList<Integer> nq;
+        private final List<AtomicBoolean> visited;
+        private final List<Integer> parents;
+
+        public inParallelWhile(Graph graph, LinkedList<Integer> cq, LinkedList<Integer> nq, List<AtomicBoolean> visited, List<Integer> parents) {
+            this.graph = graph;
+            this.cq = cq;
+            this.nq = nq;
+            this.visited = visited;
+            this.parents = parents;
+        }
+
+        @Override
+        public void run() {
+            Integer u = cq.poll();
+            if (u != null) {
+                graph.listNeighbors(u).forEach(v -> {
+                    AtomicBoolean a = visited.get(v);
+                    if (!a.get()) {
+                        if (!a.getAndSet(true)) {
+                            parents.set(v, u);
+                            nq.add(v);
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    public List<Integer> pbfs(int s) {
+        List<Integer> parents = new ArrayList<>(this.numberOfNodes());
+        List<AtomicBoolean> visited = new ArrayList<>(this.numberOfNodes());
+        LinkedList<Integer> cq = new LinkedList<>();
+        LinkedList<Integer> nq = new LinkedList<>();
+        IntStream.range(0, this.numberOfNodes()).parallel().forEach(x -> parents.add(Integer.MAX_VALUE));
+        IntStream.range(0, this.numberOfNodes()).parallel().forEach(x -> visited.add(new AtomicBoolean(false)));
+        List<Thread> threads = new LinkedList<>();
+
+        parents.set(s, Integer.MAX_VALUE);
+        visited.get(s).getAndSet(true);
+        cq.add(s);
+
+        while (cq.size() != 0) {
+            nq.clear();
+            while (cq.size() != 0) {
+                Thread thread = new Thread(new inParallelWhile(this, cq, nq, visited, parents));
+                threads.add(thread);
+                thread.start();
+            }
+            // synchronize
+            threads.forEach(thread -> {
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            // swap
+            cq.addAll(nq);
+            nq.clear();
+        }
+        // create result from parent tree
+        List<Integer> result = new ArrayList<>(this.numberOfNodes());
+        LinkedList<Integer> queue = new LinkedList<>();
+        queue.add(s);
+        result.add(s);
+        while (queue.size() != 0) {
+            Integer c = queue.poll();
+            for (int i = 0; i < parents.size(); i++) {
+                Integer p = parents.get(i);
+                if (Objects.equals(p, c)) {
+                    result.add(i);
+                    queue.add(i);
+                }
+            }
+        }
+        return result;
+    }
 }
