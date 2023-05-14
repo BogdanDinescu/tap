@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class Main {
@@ -138,5 +139,46 @@ public class Main {
         assert dfs.get(1) == 2 : "second bfs element is not 2";
         assert dfs.get(2) == 3 : "third bfs element is not 3";
         assert dfs.get(3) == 1 : "fourth bfs element is not 1";
+
+        g = new Graph(true, false);
+        g.insertEdge(0, 1);
+        g.insertEdge(1, 2);
+        g.insertEdge(2, 0);
+        g.insertEdge(3, 1);
+        g.insertEdge(3, 4);
+        g.insertEdge(4, 3);
+        List<Collection<Integer>> components = null;
+
+
+        System.out.println("\n Test for algorithm S");
+        //components = g.algorithmS();
+        //components.forEach(System.out::println);
+        //System.out.println(testComponents(components));
+
+        System.out.println("\n Test for algorithm A");
+        components = g.algorithmA();
+        components.forEach(System.out::println);
+        System.out.println(testComponents(components));
+
+        System.out.println("\n Test for algorithm RA");
+        components = g.algorithmRA();
+        components.forEach(System.out::println);
+        System.out.println(testComponents(components));
+    }
+
+    private static boolean testComponents(List<Collection<Integer>> components) {
+        if (2 != components.size()) {
+            return false;
+        }
+        boolean ok = false;
+        boolean firstComponent = components.get(0).containsAll(List.of(0, 1, 2));
+        boolean secondComponent = components.get(1).containsAll(List.of(3, 4));
+        ok = firstComponent && secondComponent;
+        if (!ok) {
+            firstComponent = components.get(1).containsAll(List.of(0, 1, 2));
+            secondComponent = components.get(0).containsAll(List.of(3, 4));
+            ok = firstComponent && secondComponent;
+        }
+        return ok;
     }
 }

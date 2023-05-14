@@ -1,3 +1,4 @@
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -20,4 +21,10 @@ public interface IGraph {
 
     List<Integer> bfs(int s);
     List<Integer> dfs(int s);
+
+    List<Collection<Integer>> algorithmA();
+
+    List<Collection<Integer>> algorithmRA();
+
+    List<Collection<Integer>> algorithmS();
 }

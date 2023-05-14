@@ -108,7 +108,11 @@ public class Graph implements IGraph {
     @Override
     public void deleteNode(int n) {
         List<Integer> integers = this.listNeighbors(n);
-        integers.forEach(i -> adjacencyList.get(i).removeIf(p -> p.getA().equals(n)));
+        integers.forEach(i -> {
+            if (adjacencyList.get(i) != null) {
+                adjacencyList.get(i).removeIf(p -> p.getA().equals(n));
+            }
+        });
         adjacencyList.remove(n);
     }
 
@@ -429,5 +433,200 @@ public class Graph implements IGraph {
             }
         }
         return result;
+    }
+
+    private boolean directConnect(List<Integer> parents) {
+        AtomicBoolean change = new AtomicBoolean(false);
+        this.listEdges().stream().parallel().forEach(pair -> {
+            Integer a = pair.getA();
+            Integer b = pair.getB();
+            if (a > b) {
+                int min = Math.min(parents.get(a), b);
+                if (parents.get(a) != min) {
+                    parents.set(a, min);
+                    change.set(true);
+                }
+            } else {
+                int min = Math.min(parents.get(b), a);
+                if (parents.get(b) != min) {
+                    parents.set(b, min);
+                    change.set(true);
+                }
+            }
+        });
+        return change.get();
+    }
+
+
+    private boolean parentConnect(List<Integer> parents) {
+        listNodes().stream().parallel().forEach(v -> {
+            parents.set(parents.get(v), parents.get(v));
+        });
+        AtomicBoolean change = new AtomicBoolean(false);
+        listEdges().stream().parallel().forEach(pair -> {
+            Integer v = pair.getA();
+            Integer w = pair.getB();
+            if (parents.get(parents.get(v)) > parents.get(parents.get(w))) {
+                change.set(true);
+                parents.set(parents.get(parents.get(v)),
+                        Math.min(parents.get(parents.get(parents.get(v))), parents.get(parents.get(w))));
+            } else {
+                change.set(true);
+                parents.set(parents.get(parents.get(w)),
+                        Math.min(parents.get(parents.get(parents.get(w))), parents.get(parents.get(v))));
+            }
+        });
+        return change.get();
+    }
+
+    private boolean directRootConnect(List<Integer> parents) {
+        AtomicBoolean change = new AtomicBoolean(false);
+        this.listEdges().stream().parallel().forEach(pair -> {
+            Integer a = pair.getA();
+            Integer b = pair.getB();
+            System.out.println(parents);
+            System.out.println(pair);
+            if (a > b && a.equals(parents.get(parents.get(a)))) {
+                int min = Math.min(parents.get(a), b);
+                if (parents.get(a) != min) {
+                    parents.set(a, min);
+                    change.set(true);
+                }
+            } else {
+                if (b.equals(parents.get(parents.get(b)))) {
+                    int min = Math.min(parents.get(b), a);
+                    if (parents.get(b) != min) {
+                        parents.set(b, min);
+                        change.set(true);
+                    }
+                }
+            }
+            System.out.println(parents);
+            System.out.println("\n");
+        });
+        return change.get();
+    }
+
+    private boolean shortcut(List<Integer> parents) {
+        listNodes().stream().parallel().forEach(v -> {
+            parents.set(parents.get(v), parents.get(v));
+        });
+        listNodes().stream().parallel().forEach(v -> {
+            parents.set(v, parents.get(parents.get(parents.get(parents.get(v)))));
+        });
+        return false;
+    }
+
+    private boolean alter(List<Integer> parents) {
+        AtomicBoolean change = new AtomicBoolean(false);
+        listEdges().stream().parallel().forEach(pair -> {
+            Integer a = pair.getA();
+            Integer b = pair.getB();
+            if (parents.get(a).equals(parents.get(b))) {
+                // delete [a b]
+                parents.set(a, parents.get(parents.get(a)));
+                parents.set(b, parents.get(parents.get(b)));
+            } else {
+                // replace [a, b] by [parents[a], parents[b]]
+                Integer gpa = parents.get(parents.get(a));
+                if (!Objects.equals(gpa, parents.get(a))) {
+                    parents.set(a, gpa);
+                    change.set(true);
+                }
+                Integer gpb = parents.get(parents.get(b));
+                if (!Objects.equals(gpb, parents.get(b))) {
+                    parents.set(b, gpb);
+                    change.set(true);
+                }
+            }
+        });
+        return change.get();
+    }
+
+    private List<Collection<Integer>> parentsToComponents(List<Integer> parents) {
+        System.out.println(parents);
+        HashSet<Integer> colors = new HashSet<>(parents);
+        List<Collection<Integer>> response = new ArrayList<>(colors.size());
+        colors.forEach(c -> {
+            Set<Integer> component = new HashSet<>();
+            for (int i = 0; i < parents.size(); i++) {
+                if (Objects.equals(parents.get(i), c)) {
+                    component.add(i);
+                }
+            }
+            response.add(component);
+        });
+        return response;
+    }
+
+    @Override
+    public List<Collection<Integer>> algorithmS() {
+        List<Integer> parents = new ArrayList<>(this.numberOfNodes());
+        IntStream.range(0, this.numberOfNodes()).forEach(parents::add);
+
+        boolean parentsChange;
+        boolean shortcutChange;
+
+        do {
+            parentsChange = parentConnect(parents);
+            System.out.println(parents);
+            do {
+                shortcutChange = shortcut(parents);
+            } while (shortcutChange);
+        } while (parentsChange);
+
+        System.out.println(parents);
+        return parentsToComponents(parents);
+    }
+
+    @Override
+    public List<Collection<Integer>> algorithmA() {
+        List<Integer> parents = new ArrayList<>(this.numberOfNodes());
+        IntStream.range(0, this.numberOfNodes()).forEach(parents::add);
+
+        boolean changes1;
+        boolean changes2;
+        boolean changes3;
+
+        do {
+            changes1 = directConnect(parents);
+            changes2 = shortcut(parents);
+            changes3 = alter(parents);
+        } while (changes1 && changes2 && changes3);
+
+        return parentsToComponents(parents);
+    }
+
+    @Override
+    public List<Collection<Integer>> algorithmRA() {
+        List<Integer> parents = new ArrayList<>(this.numberOfNodes());
+        IntStream.range(0, this.numberOfNodes()).forEach(parents::add);
+
+        AtomicBoolean changes1 = new AtomicBoolean(false);
+        AtomicBoolean changes2 = new AtomicBoolean(false);
+        AtomicBoolean changes3 = new AtomicBoolean(false);
+        Runnable r1 = () -> changes1.set(directRootConnect(parents));
+        Runnable r2 = () -> changes2.set(shortcut(parents));
+        Runnable r3 = () -> changes3.set(alter(parents));
+
+        try {
+            do {
+                Thread t1 = new Thread(r1);
+                t1.start();
+                t1.join();
+
+                Thread t2 = new Thread(r2);
+                t2.start();
+                t2.join();
+
+                Thread t3 = new Thread(r3);
+                t3.start();
+                t3.join();
+            } while (changes1.get() && changes2.get() && changes3.get());
+        } catch (InterruptedException e) {
+            return null;
+        }
+
+        return parentsToComponents(parents);
     }
 }
