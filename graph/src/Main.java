@@ -1,6 +1,4 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -141,12 +139,7 @@ public class Main {
         assert dfs.get(3) == 1 : "fourth bfs element is not 1";
 
         g = new Graph(true, false);
-        g.insertEdge(0, 1);
-        g.insertEdge(1, 2);
-        g.insertEdge(2, 0);
-        g.insertEdge(3, 1);
-        g.insertEdge(3, 4);
-        g.insertEdge(4, 3);
+        g.loadFromFile(new File("./graphExample.txt"));
         List<Collection<Integer>> components = null;
 
 
@@ -164,6 +157,7 @@ public class Main {
         components = g.algorithmRA();
         components.forEach(System.out::println);
         System.out.println(testComponents(components));
+        //writeToFile(new File("./out.txt"), components.get(0));
     }
 
     private static boolean testComponents(List<Collection<Integer>> components) {
@@ -180,5 +174,25 @@ public class Main {
             ok = firstComponent && secondComponent;
         }
         return ok;
+    }
+
+    private static void writeToFile(File file, Collection<Integer> list) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))){
+            list.forEach(x -> {
+                try {
+                    bw.write(String.valueOf(x));
+                    bw.newLine();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    System.out.println("Cannot read file");
+                }
+            });
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            System.out.println("File not found");
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Cannot read file");
+        }
     }
 }

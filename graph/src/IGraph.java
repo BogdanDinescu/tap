@@ -1,8 +1,10 @@
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 public interface IGraph {
+    void loadFromFile(File file);
     Set<Integer> listNodes();
     List<Pair> listEdges();
     List<Integer> listNeighbors(int x);

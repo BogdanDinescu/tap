@@ -1,3 +1,4 @@
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
@@ -16,6 +17,39 @@ public class Graph implements IGraph {
 
     public Graph() {
         this(false, false);
+    }
+
+    @Override
+    public void loadFromFile(File file) {
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            // read first line
+            String line = br.readLine();
+            String[] nm = line.split(" ");
+            int n = Integer.parseInt(nm[0]);
+            int m = Integer.parseInt(nm[1]);
+
+            for (int i = 0; i < m; i++){
+                line = br.readLine();
+                if (line != null){
+                    String[] s = line.split(" ");
+                    if (this.weighted) {
+                        this.insertEdge(Integer.parseInt(s[0]),
+                                Integer.parseInt(s[1]),
+                                Integer.parseInt(s[2]));
+                    } else {
+                        this.insertEdge(Integer.parseInt(s[0]),
+                                Integer.parseInt(s[1]));
+                    }
+                }
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            System.out.println("File not found");
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Cannot read file");
+        }
     }
 
     @Override
