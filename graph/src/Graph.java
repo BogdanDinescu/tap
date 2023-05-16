@@ -1,10 +1,12 @@
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Graph implements IGraph {
     private final HashMap<Integer, HashSet<Pair>> adjacencyList;
+    private final HashSet<Integer> nodeList;
     private final boolean oriented;
     private final boolean weighted;
     private int numberOfEdges;
@@ -13,6 +15,7 @@ public class Graph implements IGraph {
         this.oriented = oriented;
         this.weighted = weighted;
         this.adjacencyList = new HashMap<>();
+        this.nodeList = new HashSet<>();
     }
 
     public Graph() {
@@ -54,7 +57,7 @@ public class Graph implements IGraph {
 
     @Override
     public Set<Integer> listNodes() {
-        return adjacencyList.keySet();
+        return nodeList;
     }
 
     @Override
@@ -86,7 +89,7 @@ public class Graph implements IGraph {
 
     @Override
     public int numberOfNodes() {
-        return adjacencyList.size();
+        return nodeList.size();
     }
 
     @Override
@@ -117,6 +120,8 @@ public class Graph implements IGraph {
             adjacencyList.computeIfAbsent(y, k -> new HashSet<>());
             adjacencyList.get(y).add(new Pair(x,weight));
         }
+        nodeList.add(x);
+        nodeList.add(y);
         numberOfEdges++;
     }
 
@@ -124,6 +129,8 @@ public class Graph implements IGraph {
     public void insertEdge(int x, int y) {
         if (weighted)
             throw new RuntimeException("Weight omitted!");
+        nodeList.add(x);
+        nodeList.add(y);
         insertEdge(x, y, 0);
     }
 
@@ -147,6 +154,7 @@ public class Graph implements IGraph {
                 adjacencyList.get(i).removeIf(p -> p.getA().equals(n));
             }
         });
+        nodeList.remove(n);
         adjacencyList.remove(n);
     }
 
@@ -159,6 +167,7 @@ public class Graph implements IGraph {
         neighbors.addAll(neighborsOfY);
         neighbors.remove(p.getA());
         this.deleteNode(p.getA());
+        nodeList.remove(p.getA());
         System.out.println(neighbors);
     }
 
@@ -469,110 +478,84 @@ public class Graph implements IGraph {
         return result;
     }
 
-    private boolean directConnect(List<Integer> parents) {
+    private boolean directConnect(List<Integer> p, List<Integer> o) {
         AtomicBoolean change = new AtomicBoolean(false);
         this.listEdges().stream().parallel().forEach(pair -> {
-            Integer a = pair.getA();
-            Integer b = pair.getB();
-            if (a > b) {
-                int min = Math.min(parents.get(a), b);
-                if (parents.get(a) != min) {
-                    parents.set(a, min);
-                    change.set(true);
-                }
-            } else {
-                int min = Math.min(parents.get(b), a);
-                if (parents.get(b) != min) {
-                    parents.set(b, min);
-                    change.set(true);
-                }
+            Integer v = pair.getA();
+            Integer w = pair.getB();
+            o.set(v, p.get(v));
+            Integer parent = o.get(v);
+            if (v > w) {
+                parent = Math.min(parent, w);
+            }
+            p.set(v, parent);
+            if (!o.get(v).equals(p.get(v))) {
+                change.set(true);
             }
         });
         return change.get();
     }
 
 
-    private boolean parentConnect(List<Integer> parents) {
-        listNodes().stream().parallel().forEach(v -> {
-            parents.set(parents.get(v), parents.get(v));
-        });
+    private boolean parentConnect(List<Integer> p, List<Integer> o) {
         AtomicBoolean change = new AtomicBoolean(false);
+        listNodes().stream().parallel().forEach(v -> {
+            o.set(v, p.get(v));
+        });
+
         listEdges().stream().parallel().forEach(pair -> {
             Integer v = pair.getA();
             Integer w = pair.getB();
-            if (parents.get(parents.get(v)) > parents.get(parents.get(w))) {
-                change.set(true);
-                parents.set(parents.get(parents.get(v)),
-                        Math.min(parents.get(parents.get(parents.get(v))), parents.get(parents.get(w))));
-            } else {
-                change.set(true);
-                parents.set(parents.get(parents.get(w)),
-                        Math.min(parents.get(parents.get(parents.get(w))), parents.get(parents.get(v))));
+            if (o.get(v) > o.get(w)) {
+                synchronized (p) {
+                    p.set(o.get(v), Math.min(p.get(o.get(v)), o.get(w)));
+                }
             }
         });
         return change.get();
     }
 
-    private boolean directRootConnect(List<Integer> parents) {
+    private boolean directRootConnect(List<Integer> p, List<Integer> o) {
         AtomicBoolean change = new AtomicBoolean(false);
         this.listEdges().stream().parallel().forEach(pair -> {
-            Integer a = pair.getA();
-            Integer b = pair.getB();
-            System.out.println(parents);
-            System.out.println(pair);
-            if (a > b && a.equals(parents.get(parents.get(a)))) {
-                int min = Math.min(parents.get(a), b);
-                if (parents.get(a) != min) {
-                    parents.set(a, min);
+            Integer v = pair.getA();
+            Integer w = pair.getB();
+            if (p.get(v).equals(v)) {
+                int parent = v;
+                if (v > w) {
+                    parent = Math.min(parent, w);
+                }
+                p.set(v, parent);
+                if (!p.get(v).equals(v)) {
                     change.set(true);
                 }
-            } else {
-                if (b.equals(parents.get(parents.get(b)))) {
-                    int min = Math.min(parents.get(b), a);
-                    if (parents.get(b) != min) {
-                        parents.set(b, min);
-                        change.set(true);
-                    }
-                }
             }
-            System.out.println(parents);
-            System.out.println("\n");
         });
         return change.get();
     }
 
-    private boolean shortcut(List<Integer> parents) {
+    private boolean shortcut(List<Integer> p, List<Integer> o) {
+        AtomicBoolean change = new AtomicBoolean(false);
         listNodes().stream().parallel().forEach(v -> {
-            parents.set(parents.get(v), parents.get(v));
+            o.set(v, p.get(v));
         });
         listNodes().stream().parallel().forEach(v -> {
-            parents.set(v, parents.get(parents.get(parents.get(parents.get(v)))));
+            p.set(v, o.get(o.get(v)));
+            if (!p.get(v).equals(o.get(v))) {
+                change.set(true);
+            }
         });
-        return false;
+        return change.get();
     }
 
     private boolean alter(List<Integer> parents) {
         AtomicBoolean change = new AtomicBoolean(false);
         listEdges().stream().parallel().forEach(pair -> {
-            Integer a = pair.getA();
-            Integer b = pair.getB();
-            if (parents.get(a).equals(parents.get(b))) {
-                // delete [a b]
-                parents.set(a, parents.get(parents.get(a)));
-                parents.set(b, parents.get(parents.get(b)));
-            } else {
-                // replace [a, b] by [parents[a], parents[b]]
-                Integer gpa = parents.get(parents.get(a));
-                if (!Objects.equals(gpa, parents.get(a))) {
-                    parents.set(a, gpa);
-                    change.set(true);
-                }
-                Integer gpb = parents.get(parents.get(b));
-                if (!Objects.equals(gpb, parents.get(b))) {
-                    parents.set(b, gpb);
-                    change.set(true);
-                }
-            }
+            Integer v = pair.getA();
+            Integer w = pair.getB();
+            //if (!parents.get(v).equals(parents.get(w))) {
+            //    synchronized ()
+            //}
         });
         return change.get();
     }
@@ -595,72 +578,59 @@ public class Graph implements IGraph {
 
     @Override
     public List<Collection<Integer>> algorithmS() {
-        List<Integer> parents = new ArrayList<>(this.numberOfNodes());
-        IntStream.range(0, this.numberOfNodes()).forEach(parents::add);
+        List<Integer> p = new ArrayList<>(this.numberOfNodes());
+        IntStream.range(0, this.numberOfNodes()).forEach(p::add);
+        List<Integer> o = new ArrayList<>(this.numberOfNodes());
+        IntStream.range(0, this.numberOfNodes()).forEach(o::add);
 
         boolean parentsChange;
         boolean shortcutChange;
 
         do {
-            parentsChange = parentConnect(parents);
-            System.out.println(parents);
+            parentsChange = parentConnect(p, o);
             do {
-                shortcutChange = shortcut(parents);
+                shortcutChange = shortcut(p, o);
             } while (shortcutChange);
         } while (parentsChange);
 
-        System.out.println(parents);
-        return parentsToComponents(parents);
+        return parentsToComponents(p);
     }
 
     @Override
     public List<Collection<Integer>> algorithmA() {
-        List<Integer> parents = new ArrayList<>(this.numberOfNodes());
-        IntStream.range(0, this.numberOfNodes()).forEach(parents::add);
+        List<Integer> p = new ArrayList<>(this.numberOfNodes());
+        IntStream.range(0, this.numberOfNodes()).forEach(p::add);
+        List<Integer> o = new ArrayList<>(this.numberOfNodes());
+        IntStream.range(0, this.numberOfNodes()).forEach(o::add);
 
         boolean changes1;
         boolean changes2;
-        boolean changes3;
 
         do {
-            changes1 = directConnect(parents);
-            changes2 = shortcut(parents);
-            changes3 = alter(parents);
-        } while (changes1 && changes2 && changes3);
+            changes1 = directConnect(p, o);
+            changes2 = shortcut(p, o);
+            alter(p);
+        } while (changes1 || changes2);
 
-        return parentsToComponents(parents);
+        return parentsToComponents(p);
     }
 
     @Override
     public List<Collection<Integer>> algorithmRA() {
-        List<Integer> parents = new ArrayList<>(this.numberOfNodes());
-        IntStream.range(0, this.numberOfNodes()).forEach(parents::add);
+        List<Integer> p = new ArrayList<>(this.numberOfNodes());
+        IntStream.range(0, this.numberOfNodes()).forEach(p::add);
+        List<Integer> o = new ArrayList<>(this.numberOfNodes());
+        IntStream.range(0, this.numberOfNodes()).forEach(o::add);
 
-        AtomicBoolean changes1 = new AtomicBoolean(false);
-        AtomicBoolean changes2 = new AtomicBoolean(false);
-        AtomicBoolean changes3 = new AtomicBoolean(false);
-        Runnable r1 = () -> changes1.set(directRootConnect(parents));
-        Runnable r2 = () -> changes2.set(shortcut(parents));
-        Runnable r3 = () -> changes3.set(alter(parents));
+        boolean changes1;
+        boolean changes2;
 
-        try {
-            do {
-                Thread t1 = new Thread(r1);
-                t1.start();
-                t1.join();
+        do {
+            changes1 = directRootConnect(p, o);
+            changes2 = shortcut(p, o);
+            alter(p);
+        } while (changes1 && changes2);
 
-                Thread t2 = new Thread(r2);
-                t2.start();
-                t2.join();
-
-                Thread t3 = new Thread(r3);
-                t3.start();
-                t3.join();
-            } while (changes1.get() && changes2.get() && changes3.get());
-        } catch (InterruptedException e) {
-            return null;
-        }
-
-        return parentsToComponents(parents);
+        return parentsToComponents(p);
     }
 }

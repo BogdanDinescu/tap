@@ -142,12 +142,6 @@ public class Main {
         g.loadFromFile(new File("./graphExample.txt"));
         List<Collection<Integer>> components = null;
 
-
-        System.out.println("\n Test for algorithm S");
-        //components = g.algorithmS();
-        //components.forEach(System.out::println);
-        //System.out.println(testComponents(components));
-
         System.out.println("\n Test for algorithm A");
         components = g.algorithmA();
         components.forEach(System.out::println);
@@ -155,6 +149,11 @@ public class Main {
 
         System.out.println("\n Test for algorithm RA");
         components = g.algorithmRA();
+        components.forEach(System.out::println);
+        System.out.println(testComponents(components));
+
+        System.out.println("\n Test for algorithm S");
+        components = g.algorithmS();
         components.forEach(System.out::println);
         System.out.println(testComponents(components));
         //writeToFile(new File("./out.txt"), components.get(0));
