@@ -478,6 +478,33 @@ public class Graph implements IGraph {
         return result;
     }
 
+    private void isolate(int v) {
+        if (adjacencyList.values().stream().flatMap(Set::stream).anyMatch(x -> x.getA().equals(v))) {
+            adjacencyList.keySet().stream().parallel().forEach(x -> {
+                adjacencyList.get(x).removeIf(p -> p.getA().equals(v));
+            });
+        }
+    }
+
+    private void pdfsRecursive(int v, List<Integer> l) {
+        l.add(v);
+        isolate(v);
+        while (grad(v) > 0) {
+            Optional<Pair> first = adjacencyList.get(v).stream().findFirst();
+            if (first.isPresent()) {
+                Integer u = first.get().getA();
+                pdfsRecursive(u, l);
+            }
+        }
+    }
+
+    public List<Integer> pdfs(int s) {
+        LinkedList<Integer> l = new LinkedList<>();
+        //makeDirected();
+        pdfsRecursive(s, l);
+        return l;
+    }
+
     private boolean directConnect(List<Integer> p, List<Integer> o) {
         AtomicBoolean change = new AtomicBoolean(false);
         this.listEdges().stream().parallel().forEach(pair -> {

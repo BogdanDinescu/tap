@@ -131,13 +131,12 @@ public class Main {
         assert bfs.get(3) == 1 : "fourth bfs element is not 1";
 
         System.out.println("\nTest for paralel dfs");
-        List<Integer> pdfs = g.dfs(0);
+        List<Integer> pdfs = g.pdfs(1);
         System.out.println(pdfs);
-        assert dfs.get(0) == 0 : "first bfs element is not 0";
-        assert dfs.get(1) == 2 : "second bfs element is not 2";
-        assert dfs.get(2) == 3 : "third bfs element is not 3";
-        assert dfs.get(3) == 1 : "fourth bfs element is not 1";
-
+        assert pdfs.get(0) == 1 : "first dfs element is not 1";
+        assert pdfs.get(1) == 2 : "second dfs element is not 2";
+        assert pdfs.get(2) == 3 || pdfs.get(2) == 0: "third dfs element is not 3 or 0";
+        assert pdfs.get(3) == 0 || pdfs.get(3) == 3 : "fourth dfs element is not 0 or 3";
         g = new Graph(true, false);
         g.loadFromFile(new File("./graphExample.txt"));
         List<Collection<Integer>> components = null;
@@ -160,19 +159,13 @@ public class Main {
     }
 
     private static boolean testComponents(List<Collection<Integer>> components) {
-        if (2 != components.size()) {
+        if (3 != components.size()) {
             return false;
         }
-        boolean ok = false;
         boolean firstComponent = components.get(0).containsAll(List.of(0, 1, 2));
-        boolean secondComponent = components.get(1).containsAll(List.of(3, 4));
-        ok = firstComponent && secondComponent;
-        if (!ok) {
-            firstComponent = components.get(1).containsAll(List.of(0, 1, 2));
-            secondComponent = components.get(0).containsAll(List.of(3, 4));
-            ok = firstComponent && secondComponent;
-        }
-        return ok;
+        boolean secondComponent = components.get(1).contains(3);
+        boolean thirdComponent = components.get(2).contains(4);
+        return firstComponent && secondComponent && thirdComponent;
     }
 
     private static void writeToFile(File file, Collection<Integer> list) {
